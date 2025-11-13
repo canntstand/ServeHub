@@ -1,0 +1,71 @@
+services:
+  notes-app:
+    build:
+      context: template-apps/notes-app
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - database
+    networks:
+      - notes-app-net
+    ports:
+      - 8000:8000
+
+  database:
+    image: postgres:18.0-alpine3.22
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    networks:
+      - notes-app-net
+
+  gitlab-runner:
+    image: gitlab/gitlab-runner:alpine-bleeding
+    volumes:
+      - gitlab-runner_config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    networks:
+      - gitlab-net
+  
+  gitlab-ce:
+    image: gitlab/gitlab-ce:nightly
+    command: >
+      sh -c "
+      apk install -y curl openssh-server ca-certificates tzdata perl;
+      apk install -y postfix;
+      ufw allow http;
+      ufw allow https;
+      ufw allow ssh
+      "
+    networks:
+      - gitlab-net
+
+
+  pgadmin4:
+    image: dpage/pgadmin4:9.9.0
+    depends_on:
+      - database
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - 8080:80
+    volumes:
+      - pga4_data:/pgadmin4/servers.json
+
+networks:
+  notes-app-net:
+    driver: bridge
+  gitlab-net:
+    driver: bridge
+
+volumes:
+  db_data:
+  pga4_data:
+  gitlab-runner_config:
+  gitlab-runner_register:
