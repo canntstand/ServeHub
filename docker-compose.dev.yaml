@@ -1,5 +1,6 @@
 services:
   notes-app:
+    container_name: notes-app
     build:
       context: template-apps/notes-app
       dockerfile: Dockerfile
@@ -13,6 +14,7 @@ services:
       - 8000:8000
 
   database:
+    container_name: postgres-db
     image: postgres:18.0-alpine3.22
     volumes:
       - db_data:/var/lib/postgresql/data
@@ -24,29 +26,55 @@ services:
       - notes-app-net
 
   gitlab-runner:
-    image: gitlab/gitlab-runner:alpine-bleeding
+    container_name: gitlab-runner
+    image: gitlab/gitlab-runner:alpine-de6316fb
     volumes:
       - gitlab-runner_config:/etc/gitlab-runner
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
     networks:
       - gitlab-net
-  
+
   gitlab-ce:
-    image: gitlab/gitlab-ce:nightly
-    command: >
-      sh -c "
-      apk install -y curl openssh-server ca-certificates tzdata perl;
-      apk install -y postfix;
-      ufw allow http;
-      ufw allow https;
-      ufw allow ssh
-      "
+    container_name: gitlab-ce
+    image: gitlab/gitlab-ce:18.3.6-ce.0
     networks:
       - gitlab-net
-
+    restart: unless-stopped
+    hostname: 'gitlab.example.com'
+    env_file:
+      - .env
+    volumes:
+      - gitlab-ce_data:/var/opt/gitlab
+      - gitlab-ce_logs:/var/log/gitlab
+      - gitlab-ce_config:/etc/gitlab
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.local:8080'
+        gitlab_rails['smtp_enable'] = true
+        gitlab_rails['smtp_address'] = "smtp.gmail.com"
+        gitlab_rails['smtp_port'] = 587
+        gitlab_rails['smtp_user_name'] = ENV['SMTP_USER_NAME']
+        gitlab_rails['smtp_password'] = ENV['SMTP_PASSWORD']
+        gitlab_rails['smtp_domain'] = "smtp.gmail.com"
+        gitlab_rails['smtp_authentication'] = "login"
+        gitlab_rails['smtp_enable_starttls_auto'] = true
+        gitlab_rails['smtp_tls'] = false
+        gitlab_rails['smtp_pool'] = false
+        gitlab_rails['gitlab_email_from'] = ENV['SMTP_USER_NAME']
+        gitlab_rails['gitlab_email_display_name'] = 'GitLab ServeHub'
+        gitlab_rails['gitlab_email_reply_to'] = 'noreply@gmail.com'
+        gitlab_rails['gitlab_email_subject_suffix'] = ''
+        gitlab_rails['gitlab_email_smime_enabled'] = false
+        gitlab_rails['gitlab_shell_ssh_enabled'] = false
+        nginx['redirect_http_to_https'] = false
+    ports:
+      - "8080:80"
+      - "8443:443"
+    shm_size: '256m'
 
   pgadmin4:
+    container_name: pgadmin4
     image: dpage/pgadmin4:9.9.0
     depends_on:
       - database
@@ -54,7 +82,7 @@ services:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
     ports:
-      - 8080:80
+      - 8081:80
     volumes:
       - pga4_data:/pgadmin4/servers.json
 
@@ -68,4 +96,6 @@ volumes:
   db_data:
   pga4_data:
   gitlab-runner_config:
-  gitlab-runner_register:
+  gitlab-ce_data:
+  gitlab-ce_logs:
+  gitlab-ce_config:
