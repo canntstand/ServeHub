@@ -12,6 +12,9 @@ services:
       - notes-app-net
     ports:
       - 8000:8000
+    volumes:
+      - ./template-apps/notes-app/backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   database:
     container_name: postgres-db
@@ -41,7 +44,7 @@ services:
     networks:
       - gitlab-net
     restart: unless-stopped
-    hostname: 'gitlab.example.com'
+    hostname: "gitlab.example.com"
     env_file:
       - .env
     volumes:
@@ -50,14 +53,17 @@ services:
       - gitlab-ce_config:/etc/gitlab
     environment:
       GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://gitlab.local:8080'
+        external_url 'http://localhost:8081'
+        gitlab_workhorse['auth_socket'] = '/var/opt/gitlab/gitlab-rails/sockets/gitlab.socket'
+        puma['socket'] = '/var/opt/gitlab/gitlab-rails/sockets/gitlab.socket'
         gitlab_rails['smtp_enable'] = true
-        gitlab_rails['smtp_address'] = "smtp.gmail.com"
+        puma['worker_processes'] = 2
+        gitlab_rails['smtp_address'] = 'smtp.gmail.com'
         gitlab_rails['smtp_port'] = 587
         gitlab_rails['smtp_user_name'] = ENV['SMTP_USER_NAME']
         gitlab_rails['smtp_password'] = ENV['SMTP_PASSWORD']
-        gitlab_rails['smtp_domain'] = "smtp.gmail.com"
-        gitlab_rails['smtp_authentication'] = "login"
+        gitlab_rails['smtp_domain'] = 'smtp.gmail.com'
+        gitlab_rails['smtp_authentication'] = 'login'
         gitlab_rails['smtp_enable_starttls_auto'] = true
         gitlab_rails['smtp_tls'] = false
         gitlab_rails['smtp_pool'] = false
@@ -68,10 +74,12 @@ services:
         gitlab_rails['gitlab_email_smime_enabled'] = false
         gitlab_rails['gitlab_shell_ssh_enabled'] = false
         nginx['redirect_http_to_https'] = false
+        nginx['listen_port'] = 80
+        nginx['listen_addresses'] = ['0.0.0.0']
+        nginx['client_max_body_size'] = '250m'
     ports:
-      - "8080:80"
-      - "8443:443"
-    shm_size: '256m'
+      - "8081:80"
+    shm_size: "256m"
 
   pgadmin4:
     container_name: pgadmin4
@@ -82,7 +90,7 @@ services:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
     ports:
-      - 8081:80
+      - 8082:80
     volumes:
       - pga4_data:/pgadmin4/servers.json
 
