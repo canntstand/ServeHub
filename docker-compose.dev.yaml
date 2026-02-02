@@ -44,13 +44,14 @@ services:
     networks:
       - gitlab-net
     restart: unless-stopped
-    hostname: "gitlab.example.com"
+    hostname: "gitlab.local"
     env_file:
       - .env
     volumes:
       - gitlab-ce_data:/var/opt/gitlab
       - gitlab-ce_logs:/var/log/gitlab
       - gitlab-ce_config:/etc/gitlab
+      - ./scripts/root-setup.sh:/root-setup.sh
     environment:
       GITLAB_OMNIBUS_CONFIG: |
         external_url 'http://localhost:8081'
@@ -80,6 +81,20 @@ services:
     ports:
       - "8081:80"
     shm_size: "256m"
+
+  gitlab-ce-helper:
+    container_name: gitlab-ce-helper
+    image: gitlab/gitlab-ce:18.3.6-ce.0
+    depends_on:
+      - gitlab-ce
+    volumes_from:
+      - gitlab-ce
+    volumes:
+      - ./scripts/root-setup.sh:./root-setup.sh
+    network_mode: service:gitlab-ce
+    pid: service:gitlab-ce
+    command: ["/bin/bash", "-c", "./root-setup.sh"]
+
 
   pgadmin4:
     container_name: pgadmin4
