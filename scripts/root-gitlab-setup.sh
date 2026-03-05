@@ -1,14 +1,11 @@
 #!/bin/bash
 
+# скрипт для установки пароля для root пользователя, ник пользователя - root
+# перед использованием в контейнере лучше немного подождать до инициализации gitlab-ce
+
 set -e
 
 echo "Смена пароля root..."
-
-while ! [ -f /opt/gitlab/etc/gitlab-rails-rc ]
-do
-    continue
-    sleep 10
-done
 
 echo -e "${ROOT_PASSWORD}\n${ROOT_PASSWORD}" | gitlab-rake "gitlab:password:reset[root]"
 

@@ -1,33 +1,4 @@
 services:
-  notes-app:
-    container_name: notes-app
-    build:
-      context: template-apps/notes-app
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    depends_on:
-      - database
-    networks:
-      - notes-app-net
-    ports:
-      - 8000:8000
-    volumes:
-      - ./template-apps/notes-app/backend:/app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-  database:
-    container_name: postgres-db
-    image: postgres:18.0-alpine3.22
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    networks:
-      - notes-app-net
-
   gitlab-runner:
     container_name: gitlab-runner
     image: gitlab/gitlab-runner:alpine-de6316fb
@@ -51,7 +22,7 @@ services:
       - gitlab-ce_data:/var/opt/gitlab
       - gitlab-ce_logs:/var/log/gitlab
       - gitlab-ce_config:/etc/gitlab
-      - ./scripts/root-setup.sh:/root-setup.sh
+      - ./scripts/root-gitlab-setup.sh:/root-gitlab-setup.sh
     environment:
       GITLAB_OMNIBUS_CONFIG: |
         external_url 'http://localhost:8081'
@@ -81,43 +52,11 @@ services:
     ports:
       - "8081:80"
     shm_size: "256m"
-
-  gitlab-ce-helper:
-    container_name: gitlab-ce-helper
-    image: gitlab/gitlab-ce:18.3.6-ce.0
-    depends_on:
-      - gitlab-ce
-    volumes_from:
-      - gitlab-ce
-    volumes:
-      - ./scripts/root-setup.sh:./root-setup.sh
-    network_mode: service:gitlab-ce
-    pid: service:gitlab-ce
-    command: ["/bin/bash", "-c", "./root-setup.sh"]
-
-
-  pgadmin4:
-    container_name: pgadmin4
-    image: dpage/pgadmin4:9.9.0
-    depends_on:
-      - database
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
-    ports:
-      - 8082:80
-    volumes:
-      - pga4_data:/pgadmin4/servers.json
-
 networks:
-  notes-app-net:
-    driver: bridge
   gitlab-net:
     driver: bridge
 
 volumes:
-  db_data:
-  pga4_data:
   gitlab-runner_config:
   gitlab-ce_data:
   gitlab-ce_logs:
