@@ -5,9 +5,12 @@ services:
     volumes:
       - gitlab-runner_config:/etc/gitlab-runner
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./scripts/gitlab-runner-setup.sh:/gitlab-runner-setup.sh
     restart: unless-stopped
     networks:
       - gitlab-net
+    env_file:
+      - .env
 
   gitlab-ce:
     container_name: gitlab-ce
@@ -52,6 +55,7 @@ services:
     ports:
       - "8081:80"
     shm_size: "256m"
+
 networks:
   gitlab-net:
     driver: bridge
