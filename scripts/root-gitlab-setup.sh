@@ -17,4 +17,9 @@ gitlab-rails runner "
     user.skip_reconfirmation!;
     user.save!
 "
+
+echo "Настройки безопасности..."
+
+gitlab-rails runner "ApplicationSetting.last.update_attributes(signup_enabled: false)"
+
 echo "Все готово!"

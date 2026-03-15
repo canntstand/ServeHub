@@ -11,6 +11,8 @@ services:
       - gitlab-net
     env_file:
       - .env
+    environment:
+      - CLONE_URL=http://gitlab-ce:80
 
   gitlab-ce:
     container_name: gitlab-ce
@@ -28,6 +30,7 @@ services:
       - ./scripts/root-gitlab-setup.sh:/root-gitlab-setup.sh
     environment:
       GITLAB_OMNIBUS_CONFIG: |
+        gitlab_rails['gitlab_signup_enabled'] = false
         external_url 'http://localhost:8081'
         gitlab_workhorse['auth_socket'] = '/var/opt/gitlab/gitlab-rails/sockets/gitlab.socket'
         puma['socket'] = '/var/opt/gitlab/gitlab-rails/sockets/gitlab.socket'
@@ -59,6 +62,7 @@ services:
 networks:
   gitlab-net:
     driver: bridge
+    name: gitlab-net
 
 volumes:
   gitlab-runner_config:
