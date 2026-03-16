@@ -1,0 +1,9 @@
+stages:
+  - test
+
+check_runner:
+  stage: test
+  script:
+    - echo "Runner is working!"
+    - hostname
+    - date
