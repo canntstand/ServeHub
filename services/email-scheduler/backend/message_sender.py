@@ -3,11 +3,15 @@ import dotenv
 import os
 from email.message import EmailMessage
 import re
+from datetime import datetime
+import time
 
 dotenv.load_dotenv()
 
 
-def send_message(receiver_email: str, subject: str, message_body: str):
+def send_message(
+    receiver_email: str, subject: str, message_body: str, sending_time: str
+):
     token = os.getenv("SMTP_PASSWORD")
     sender_email = os.getenv("SMTP_USER_NAME")
 
@@ -20,12 +24,15 @@ def send_message(receiver_email: str, subject: str, message_body: str):
     msg["From"] = sender_email
     msg["To"] = receiver_email
 
+    while sending_time != f"{datetime.now().hour}:{datetime.now().minute}":
+        time.sleep(30)
+
     try:
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
             server.login(sender_email, token)
             server.send_message(msg)
-        
+
         print(f"Сообщение было отослано по адресу: {receiver_email}")
         return 200
 

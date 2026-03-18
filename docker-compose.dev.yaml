@@ -6,13 +6,16 @@ services:
       - gitlab-runner_config:/etc/gitlab-runner
       - /var/run/docker.sock:/var/run/docker.sock
       - ./scripts/gitlab-runner-setup.sh:/gitlab-runner-setup.sh
-    restart: unless-stopped
     networks:
       - gitlab-net
-    env_file:
-      - .env
+      - app-net
     environment:
       - CLONE_URL=http://gitlab-ce:80
+      - GITLAB_RUNNER_TOKEN=${GITLAB_RUNNER_TOKEN}
+
+    depends_on:
+      gitlab-ce:
+        condition: service_healthy
 
   gitlab-ce:
     container_name: gitlab-ce
@@ -21,51 +24,101 @@ services:
       - gitlab-net
     restart: unless-stopped
     hostname: "gitlab.local"
-    env_file:
-      - .env
     volumes:
       - gitlab-ce_data:/var/opt/gitlab
       - gitlab-ce_logs:/var/log/gitlab
       - gitlab-ce_config:/etc/gitlab
       - ./scripts/root-gitlab-setup.sh:/root-gitlab-setup.sh
     environment:
+      ROOT_PASSWORD: ${ROOT_PASSWORD}
+      ROOT_EMAIL: ${ROOT_EMAIL}
       GITLAB_OMNIBUS_CONFIG: |
-        gitlab_rails['gitlab_signup_enabled'] = false
-        external_url 'http://localhost:8081'
-        gitlab_workhorse['auth_socket'] = '/var/opt/gitlab/gitlab-rails/sockets/gitlab.socket'
-        puma['socket'] = '/var/opt/gitlab/gitlab-rails/sockets/gitlab.socket'
-        gitlab_rails['smtp_enable'] = true
-        puma['worker_processes'] = 2
-        gitlab_rails['smtp_address'] = 'smtp.gmail.com'
-        gitlab_rails['smtp_port'] = 587
-        gitlab_rails['smtp_user_name'] = ENV['SMTP_USER_NAME']
-        gitlab_rails['smtp_password'] = ENV['SMTP_PASSWORD']
-        gitlab_rails['smtp_domain'] = 'smtp.gmail.com'
-        gitlab_rails['smtp_authentication'] = 'login'
-        gitlab_rails['smtp_enable_starttls_auto'] = true
-        gitlab_rails['smtp_tls'] = false
-        gitlab_rails['smtp_pool'] = false
-        gitlab_rails['gitlab_email_from'] = ENV['SMTP_USER_NAME']
-        gitlab_rails['gitlab_email_display_name'] = 'GitLab ServeHub'
-        gitlab_rails['gitlab_email_reply_to'] = 'noreply@gmail.com'
-        gitlab_rails['gitlab_email_subject_suffix'] = ''
-        gitlab_rails['gitlab_email_smime_enabled'] = false
-        gitlab_rails['gitlab_shell_ssh_enabled'] = false
-        nginx['redirect_http_to_https'] = false
-        nginx['listen_port'] = 80
-        nginx['listen_addresses'] = ['0.0.0.0']
-        nginx['client_max_body_size'] = '250m'
+        gitlab_rails['gitlab_signup_enabled'] = false;
+        external_url 'http://localhost:8081';
+        gitlab_workhorse['auth_socket'] = '/var/opt/gitlab/gitlab-rails/sockets/gitlab.socket';
+        puma['socket'] = '/var/opt/gitlab/gitlab-rails/sockets/gitlab.socket';
+        gitlab_rails['smtp_enable'] = true;
+        puma['worker_processes'] = 2;
+        gitlab_rails['smtp_address'] = 'smtp.gmail.com';
+        gitlab_rails['smtp_port'] = 587;
+        gitlab_rails['smtp_user_name'] = ENV['SMTP_USER_NAME'];
+        gitlab_rails['smtp_password'] = ENV['SMTP_PASSWORD'];
+        gitlab_rails['smtp_domain'] = 'smtp.gmail.com';
+        gitlab_rails['smtp_authentication'] = 'login';
+        gitlab_rails['smtp_enable_starttls_auto'] = true;
+        gitlab_rails['smtp_tls'] = false;
+        gitlab_rails['smtp_pool'] = false;
+        gitlab_rails['gitlab_email_from'] = ENV['SMTP_USER_NAME'];
+        gitlab_rails['gitlab_email_display_name'] = 'GitLab ServeHub';
+        gitlab_rails['gitlab_email_reply_to'] = 'noreply@gmail.com';
+        gitlab_rails['gitlab_email_subject_suffix'] = '';
+        gitlab_rails['gitlab_email_smime_enabled'] = false;
+        gitlab_rails['gitlab_shell_ssh_enabled'] = false;
+        nginx['redirect_http_to_https'] = false;
+        nginx['listen_port'] = 80;
+        nginx['listen_addresses'] = ['0.0.0.0'];
+        nginx['client_max_body_size'] = '250m';
     ports:
       - "8081:80"
     shm_size: "256m"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/-/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 2m
+
+  postgresql:
+    container_name: postgresql
+    image: postgres:18.3-alpine
+    networks:
+      - app-net
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - 5432:5432
+    volumes:
+      - pg_main_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    command: >
+      postgres -c listen_addresses="*"
+
+  pgadmin4:
+    container_name: pgadmin4
+    image: dpage/pgadmin4:9.13
+    networks:
+      - app-net
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - 5050:80
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    volumes:
+      - pgadmin4_data:/var/lib/pgadmin
 
 networks:
   gitlab-net:
     driver: bridge
     name: gitlab-net
+  app-net:
+    driver: bridge
+    name: app-net
 
 volumes:
   gitlab-runner_config:
   gitlab-ce_data:
   gitlab-ce_logs:
   gitlab-ce_config:
+  pg_main_data:
+  pgadmin4_data:

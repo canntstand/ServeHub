@@ -1,0 +1,260 @@
+@import url('https://fonts.googleapis.com');
+
+:root {
+    --accent: #e4569d;
+    --accent-glow: rgba(228, 86, 157, 0.4);
+    --bg-glass: rgba(255, 255, 255, 0.05);
+    --text: #ebebeb;
+}
+
+* {
+    box-sizing: border-box;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+body {
+    background: #0f0f0f url("/static/images/background.jpg") center/cover no-repeat fixed;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+/* Контейнер для всей формы, чтобы добавить эффект матового стекла */
+.form-container {
+    background: var(--bg-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 40px;
+    padding: 40px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+}
+
+.main-title {
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 35px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 0 0 15px var(--accent-glow);
+}
+
+.email-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* Поля ввода */
+.email-form input,
+.email-form textarea {
+    width: 100%;
+    padding: 16px 25px;
+    border: 2px solid rgba(228, 86, 157, 0.3); /* Делаем границы тоньше и мягче */
+    border-radius: 20px; /* Уходим от слишком длинных "сосисок" к мягким углам */
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text);
+    font-size: 15px;
+    outline: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.email-form textarea {
+    min-height: 140px;
+    border-radius: 20px;
+    resize: none;
+}
+
+/* Красивый эффект при фокусе */
+.email-form input:focus,
+.email-form textarea:focus {
+    border-color: var(--accent);
+    background: rgba(228, 86, 157, 0.05);
+    box-shadow: 0 0 20px var(--accent-glow), inset 0 0 10px rgba(228, 86, 157, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Плейсхолдеры */
+.email-form input::placeholder,
+.email-form textarea::placeholder {
+    color: rgba(235, 235, 235, 0.4);
+    font-size: 13px;
+}
+
+/* Кнопка с градиентом */
+.email-form button {
+    margin-top: 10px;
+    padding: 18px;
+    border: none;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #e4569d, #9d44c0);
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px rgba(228, 86, 157, 0.3);
+}
+
+.email-form button:hover {
+    transform: scale(1.02);
+    box-shadow: 0 15px 30px var(--accent-glow);
+    filter: brightness(1.1);
+}
+
+.email-form button:active {
+    transform: scale(0.98);
+}
+
+/* Стилизация времени */
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1); /* Делает иконку часов белой */
+    cursor: pointer;
+}
+
+.success-container {
+    background: var(--bg-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 40px;
+    padding: 50px 40px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 550px;
+    text-align: center;
+}
+
+.success-icon {
+    font-size: 80px;
+    line-height: 1;
+    margin-bottom: 15px;
+    filter: drop-shadow(0 0 20px var(--accent-glow));
+    animation: softGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes softGlow {
+    from { filter: drop-shadow(0 0 15px rgba(228, 86, 157, 0.4)); }
+    to { filter: drop-shadow(0 0 30px rgba(228, 86, 157, 0.8)); }
+}
+
+.success-title {
+    color: var(--text);
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    text-shadow: 0 0 15px var(--accent-glow);
+}
+
+.success-message {
+    color: rgba(235, 235, 235, 0.9);
+    font-size: 18px;
+    line-height: 1.6;
+    margin-bottom: 35px;
+    padding: 0 15px;
+    background: rgba(228, 86, 157, 0.08);
+    border-radius: 30px;
+    padding: 20px 25px;
+    border: 1px solid rgba(228, 86, 157, 0.2);
+    backdrop-filter: blur(4px);
+}
+
+.queue-highlight {
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px 10px;
+    border-radius: 40px;
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 15px;
+    border: 1px solid rgba(228, 86, 157, 0.3);
+}
+
+.success-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.btn-primary {
+    padding: 18px 25px;
+    border: none;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #e4569d, #9d44c0);
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px rgba(228, 86, 157, 0.3);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary:hover {
+    transform: scale(1.02);
+    box-shadow: 0 15px 30px var(--accent-glow);
+    filter: brightness(1.1);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+.btn-secondary {
+    padding: 14px 25px;
+    border: 2px solid var(--accent);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    backdrop-filter: blur(4px);
+}
+
+.btn-secondary:hover {
+    background: rgba(228, 86, 157, 0.15);
+    border-color: #ff80b5;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(228, 86, 157, 0.25);
+}
+
+.btn-secondary:active {
+    transform: translateY(0);
+}
+
+.time-info {
+    font-size: 14px;
+    color: rgba(235, 235, 235, 0.5);
+    margin-top: 30px;
+    border-top: 1px dashed rgba(228, 86, 157, 0.3);
+    padding-top: 25px;
+    letter-spacing: 0.5px;
+}
+
+.time-info strong {
+    color: var(--accent);
+    font-weight: 600;
+}
