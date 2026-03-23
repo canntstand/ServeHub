@@ -12,6 +12,7 @@ dotenv.load_dotenv()
 def send_message(
     receiver_email: str, subject: str, message_body: str, sending_time: str
 ):
+    sending_time = datetime.fromisoformat(sending_time)
     token = os.getenv("SMTP_PASSWORD")
     sender_email = os.getenv("SMTP_USER_NAME")
 
@@ -24,7 +25,7 @@ def send_message(
     msg["From"] = sender_email
     msg["To"] = receiver_email
 
-    while sending_time != f"{datetime.now().hour}:{datetime.now().minute}":
+    while sending_time >= datetime.now():
         time.sleep(30)
 
     try:

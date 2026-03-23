@@ -3,10 +3,20 @@ from .message_sender import send_message
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
+from database.database import init_db
 
 
-app = FastAPI(redirect_slashes=True)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    yield
+
+
+app = FastAPI(redirect_slashes=True, lifespan=lifespan)
+
 templates = Jinja2Templates(directory="services/email-scheduler/frontend")
+
 app.mount(
     "/static", StaticFiles(directory="services/email-scheduler/frontend"), name="static"
 )
