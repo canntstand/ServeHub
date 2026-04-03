@@ -135,8 +135,6 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
-    volumes:
-      - ./services/email-scheduler:/app
     ports:
       - 8000:8000
     restart: always

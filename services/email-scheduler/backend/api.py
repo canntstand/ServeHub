@@ -1,14 +1,14 @@
 from typing import Annotated
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection
-from fastapi import Depends, FastAPI, Form, Request
+from fastapi import Depends, FastAPI, Request, BackgroundTasks, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from database.database import init_db, get_db
-from datetime import datetime
-import re
+from backend.message_sender import async_send_message
+from backend.schemas import EmailSchema
 
 
 @asynccontextmanager
@@ -42,16 +42,19 @@ def get_information_page(request: Request):
 @app.post("/api/v1", response_class=RedirectResponse)
 async def handle_email_request(
     db: Annotated[AsyncConnection, Depends(get_db)],
+    background_tasks: BackgroundTasks,
     receiver_email: str = Form(...),
     subject: str = Form(...),
     message_body: str = Form(...),
     sending_time: str = Form(...),
 ):
 
-    if not re.match(r"[^@]+@[^@]+\.[^@]+", receiver_email):
-        return 400
-
-    sending_time = datetime.fromisoformat(sending_time)
+    data = EmailSchema(
+        receiver_email=receiver_email,
+        subject=subject,
+        message_body=message_body,
+        sending_time=sending_time,
+    )
 
     query = text("""
     INSERT INTO emails (is_sent, receiver_email, subject, message_body, sending_time)
@@ -62,11 +65,12 @@ async def handle_email_request(
         query,
         {
             "is_sent": False,
-            "receiver_email": receiver_email,
-            "subject": subject,
-            "message_body": message_body,
-            "sending_time": sending_time,
+            "receiver_email": data.receiver_email,
+            "subject": data.subject,
+            "message_body": data.message_body,
+            "sending_time": data.sending_time,
         },
     )
 
+    background_tasks.add_task(async_send_message)
     return RedirectResponse(url="/message-scheduled", status_code=303)
