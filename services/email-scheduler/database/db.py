@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import create_async_engine
 import dotenv
 import os
-from .tables import Base
+from database.tables import Base
+import asyncio
 
 dotenv.load_dotenv()
 
@@ -17,7 +18,11 @@ engine = create_async_engine(
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    await engine.dispose()
 
 async def get_db():
-    async with engine.begin() as conn:
+    async with engine.connect() as conn:
         yield conn
+
+if __name__ == "__main__":
+    asyncio.run(init_db())

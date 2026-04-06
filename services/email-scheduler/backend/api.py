@@ -1,23 +1,15 @@
 from typing import Annotated
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection
-from fastapi import Depends, FastAPI, Request, BackgroundTasks, Form
+from fastapi import Depends, FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from contextlib import asynccontextmanager
-from database.database import init_db, get_db
-from backend.message_sender import async_send_message
+from database.db import get_db
 from backend.schemas import EmailSchema
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await init_db()
-    yield
-
-
-app = FastAPI(redirect_slashes=True, lifespan=lifespan)
+app = FastAPI(redirect_slashes=True)
 
 templates = Jinja2Templates(directory="frontend")
 
@@ -42,7 +34,6 @@ def get_information_page(request: Request):
 @app.post("/api/v1", response_class=RedirectResponse)
 async def handle_email_request(
     db: Annotated[AsyncConnection, Depends(get_db)],
-    background_tasks: BackgroundTasks,
     receiver_email: str = Form(...),
     subject: str = Form(...),
     message_body: str = Form(...),
@@ -71,6 +62,5 @@ async def handle_email_request(
             "sending_time": data.sending_time,
         },
     )
-
-    background_tasks.add_task(async_send_message)
+    await db.commit()
     return RedirectResponse(url="/message-scheduled", status_code=303)

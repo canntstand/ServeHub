@@ -114,24 +114,15 @@ services:
     entrypoint: >
       /bin/sh -c "sh /pgadmin4-setup.sh && /entrypoint.sh"
 
-  email-scheduler:
-    container_name: email-scheduler
+  email-scheduler-api:
+    container_name: email-scheduler-api
     build:
       context: services/email-scheduler
       dockerfile: Dockerfile
-    command:
-      [
-        "gunicorn",
-        "-k",
-        "uvicorn.workers.UvicornWorker",
-        "-c",
-        "gunicorn_config.py",
-        "backend.api:app",
-        "--reload",
-      ]
+    command: >
+      sh -c "python -m database.db && 
+             gunicorn -k uvicorn.workers.UvicornWorker -c gunicorn_config.py backend.api:app --reload"
     environment:
-      - SMTP_USER_NAME=${SMTP_USER_NAME}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
@@ -143,6 +134,25 @@ services:
     depends_on:
       postgresql:
         condition: service_healthy
+
+  email-scheduler-worker:
+    container_name: email-scheduler-worker
+    build:
+      context: services/email-scheduler
+      dockerfile: Dockerfile
+    command: >
+      python -m backend.message_sender
+    networks:
+      - app-net
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment:
+      - SMTP_USER_NAME=${SMTP_USER_NAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
 
 networks:
   gitlab-net:
