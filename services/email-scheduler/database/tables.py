@@ -15,4 +15,6 @@ class Email(Base):
     receiver_email: Mapped[str] = mapped_column(String(255), nullable=False)
     subject: Mapped[str] = mapped_column(String(255), nullable=False)
     message_body: Mapped[str] = mapped_column(String)
-    sending_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    sending_time: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )

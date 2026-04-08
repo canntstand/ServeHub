@@ -11,7 +11,7 @@ RUN poetry config virtualenvs.create false && poetry install --no-interaction --
 
 FROM python:3.13-alpine
 
-RUN apk add --no-cache libpq
+RUN apk add --no-cache libpq curl
 
 WORKDIR /app
 
